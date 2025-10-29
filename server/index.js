@@ -10,9 +10,10 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins for API access
+    origin: "*", // allow all origins
     methods: ["GET", "POST"]
   }
 });
@@ -20,48 +21,49 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-const PORT = 5000;
+// ✅ Use environment variable for port
+const PORT = process.env.PORT || 5000;
 
-// MongoDB connection
-mongoose.connect('mongodb://localhost:27017/chatbot', {
+// ✅ Use MongoDB Atlas connection
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chatbot';
+
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => {
-  console.log('✅ Connected to MongoDB');
-}).catch((error) => {
-  console.error('❌ MongoDB connection error:', error);
-});
+})
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch((error) => console.error('❌ MongoDB connection error:', error));
 
-// Routes
+// Import routes
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const { sendMessage } = require('./controllers/chatController');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Legacy route for backward compatibility
-app.post('/chat', require('./controllers/chatController').sendMessage);
+// Legacy POST route
+app.post('/chat', sendMessage);
 
-// Socket.io for real-time updates
+// Socket.io setup
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('join-conversation', (conversationId) => {
-    socket.join(conversationId);
-  });
+  socket.on('join-conversation', (conversationId) => socket.join(conversationId));
+  socket.on('leave-conversation', (conversationId) => socket.leave(conversationId));
 
-  socket.on('leave-conversation', (conversationId) => {
-    socket.leave(conversationId);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
+  socket.on('disconnect', () => console.log('User disconnected:', socket.id));
 });
 
 // Make io accessible in routes
 app.set('io', io);
 
-server.listen(PORT, () => {
-  console.log(`✅ Server is running at http://localhost:${PORT}`);
-});
+// ✅ Export app for Vercel
+module.exports = app;
+
+// ✅ Start server only locally (not on Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  server.listen(PORT, () => {
+    console.log(`✅ Server is running at http://localhost:${PORT}`);
+  });
+}
