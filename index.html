@@ -1,0 +1,2593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NamasteAI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables for Theming */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --sidebar-bg: #f8f9fa;
+            --header-bg: #ffffff;
+            --input-bg: #ffffff;
+            --border-color: #e1e5e9;
+            --hover-bg: #f1f3f4;
+            --primary-color: #00aaff;
+            --primary-hover: #0056b3;
+            --accent-color: #aa55ff;
+            --glow-color: rgba(0, 170, 255, 0.6);
+            --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-glow: 0 0 25px rgba(0, 170, 255, 0.4);
+            --user-msg-bg: #007bff;
+            --user-msg-text: #ffffff;
+            --bot-msg-bg: #f1f3f4;
+            --bot-msg-text: #333333;
+        }
+
+        body.dark {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --text-secondary: #cccccc;
+            --sidebar-bg: #252525;
+            --header-bg: #2d2d2d;
+            --input-bg: #333333;
+            --border-color: #404040;
+            --hover-bg: #404040;
+            --primary-color: #00aaff;
+            --primary-hover: #0077cc;
+            --glow-color: rgba(0, 170, 255, 0.7);
+            --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 25px rgba(0, 170, 255, 0.5);
+            --user-msg-bg: #0d6efd;
+            --bot-msg-bg: #404040;
+            --bot-msg-text: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #1a1a2e 100%);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            animation: sciFiGlow 10s ease-in-out infinite alternate;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            animation: gridMove 20s linear infinite;
+        }
+        
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0));
+            background-size: 100% 4px;
+            animation: scan 7s linear infinite;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        @keyframes scan {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100vh; }
+        }
+
+        @keyframes sciFiGlow {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .chat-app {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            color: var(--text-color);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-container {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .new-conversation-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .new-conversation-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .sidebar-toggle {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--hover-bg);
+            transform: scale(1.05);
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .conversation-item {
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            background: linear-gradient(135deg, var(--sidebar-bg) 0%, rgba(59, 130, 246, 0.05) 100%);
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .conversation-content {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .delete-chat-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            margin-left: 8px;
+        }
+
+        .conversation-item:hover .delete-chat-btn {
+            opacity: 1;
+        }
+
+        .delete-chat-btn:hover {
+            color: #ff4757;
+            background: rgba(255, 71, 87, 0.1);
+        }
+
+        .conversation-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .conversation-item:hover::before {
+            left: 100%;
+        }
+
+        .conversation-item:hover,
+        .conversation-item.active {
+            background: linear-gradient(135deg, var(--hover-bg) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .close-sidebar-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0 8px;
+            border-radius: 4px;
+            transition: color 0.3s ease;
+        }
+
+        .close-sidebar-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .conversation-item.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            border-color: var(--glow-color);
+            box-shadow: 0 0 20px var(--glow-color);
+        }
+
+        .conversation-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .conversation-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Chat */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin-left: 0;
+            transition: margin-left 0.5s ease;
+        }
+
+        .sidebar.open ~ .main-chat {
+            margin-left: 300px;
+        }
+
+        .chat-header {
+            padding: 5px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glitch 5s infinite;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .logout-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+            color: var(--text-color);
+        }
+
+        .logout-btn:hover {
+            background: var(--hover-bg);
+            transform: scale(1.05);
+        }
+
+        @keyframes glitch {
+            0%, 100% {
+                text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color);
+                transform: skewX(0);
+            }
+            5%, 15% {
+                transform: skewX(5deg);
+            }
+            10% {
+                transform: skewX(-5deg);
+            }
+            20%, 40%, 60%, 80% {
+                text-shadow: 2px 2px 2px #ff00ff, -2px -2px 2px #00ffff;
+                transform: skewX(0);
+            }
+            20.1%, 40.1%, 60.1%, 80.1% {
+                text-shadow: -2px -2px 2px #ff00ff, 2px 2px 2px #00ffff;
+            }
+            20.2%, 40.2%, 60.2%, 80.2% {
+                text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color);
+            }
+            50% {
+                transform: translateX(1px);
+            }
+            51% {
+                transform: translateX(-1px);
+            }
+        }
+
+        .theme-toggle {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover-bg);
+            transform: scale(1.05);
+        }
+
+        .sound-toggle {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .sound-toggle:hover {
+            background: var(--hover-bg);
+            transform: scale(1.05);
+        }
+
+        .app-heading {
+            padding: 5px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+            animation: glitch 5s infinite;
+        }
+
+        /* Messages */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 90%;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message.user {
+            align-items: flex-end;
+        }
+
+        .message.assistant {
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 18px;
+            background: var(--user-msg-bg);
+            color: var(--user-msg-text);
+            word-wrap: break-word;
+            position: relative;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+        }
+
+        .message.assistant .message-content {
+            background: linear-gradient(135deg, var(--bot-msg-bg) 0%, rgba(139, 92, 246, 0.1) 100%);
+            color: var(--bot-msg-text);
+            box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, var(--user-msg-bg) 0%, rgba(59, 130, 246, 0.1) 100%);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            padding: 0 4px;
+        }
+
+        .message.user .message-time {
+            text-align: right;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            background: var(--input-bg);
+        }
+
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .send-button {
+            padding: 12px 24px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Fixed sidebar toggle button */
+        .sidebar-toggle-fixed {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            z-index: 1001;
+            box-shadow: var(--shadow-soft);
+        }
+        .sidebar.open ~ .sidebar-toggle-fixed {
+            display: none;
+        }
+        .send-button:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Auth Overlay Styles */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .auth-container {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(45, 45, 69, 0.95) 50%, rgba(26, 26, 26, 0.95) 100%);
+            border: 1px solid rgba(0, 170, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 170, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            animation: rotate 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .auth-container h2 {
+            color: var(--text-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glitch 3s infinite;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid rgba(0, 170, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .auth-button:hover::before {
+            left: 100%;
+        }
+
+        .auth-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 170, 255, 0.4);
+        }
+
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            color: #ff4757;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 71, 87, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 71, 87, 0.2);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        .link-button:hover {
+            color: var(--accent-color);
+        }
+
+        .auth-prompt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 4000;
+        }
+
+        .auth-prompt {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(45, 45, 69, 0.95) 100%);
+            border: 1px solid rgba(0, 170, 255, 0.3);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 170, 255, 0.3);
+        }
+
+        .auth-prompt h3 {
+            color: var(--text-color);
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .auth-prompt p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .auth-prompt-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .auth-prompt-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .auth-prompt-actions button:first-child {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .auth-prompt-actions button:last-child {
+            background: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .auth-prompt-actions button:hover {
+            transform: translateY(-1px);
+        }
+
+        .message-counter {
+            position: absolute;
+            top: -30px;
+            right: 0;
+            background: rgba(255, 71, 87, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Game Styles */
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .game-modal {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(45, 45, 69, 0.95) 50%, rgba(26, 26, 26, 0.95) 100%);
+            border: 1px solid rgba(0, 170, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 170, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-modal::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            animation: rotate 20s linear infinite;
+            pointer-events: none;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 170, 255, 0.2);
+        }
+
+        .game-header h2 {
+            color: var(--text-color);
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .close-game-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-game-btn:hover {
+            color: var(--primary-color);
+            background: rgba(0, 170, 255, 0.1);
+        }
+
+        .game-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .game-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            width: 100%;
+        }
+
+        .game-option {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(0, 170, 255, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .game-option:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 170, 255, 0.2);
+        }
+
+        .game-icon {
+            font-size: 32px;
+            width: 50px;
+            text-align: center;
+        }
+
+        .game-info {
+            flex: 1;
+        }
+
+        .game-title {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .game-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Tic-Tac-Toe Styles */
+        #tictactoeCanvas {
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+        }
+
+        .game-status {
+            font-weight: 500;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .game-reset-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .game-reset-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Rock Paper Scissors Styles */
+        .rps-choices {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .rps-choice {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(0, 170, 255, 0.2);
+            border-radius: 12px;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .rps-choice:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        .rps-result {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+            text-align: center;
+            min-height: 30px;
+        }
+
+        .rps-score {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Number Guessing Styles */
+        .guess-prompt {
+            text-align: center;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        #guessInput {
+            width: 100px;
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            text-align: center;
+            font-size: 16px;
+        }
+
+        #guessInput:focus {
+            border-color: var(--primary-color);
+        }
+
+        .guess-submit-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .guess-submit-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .guess-hint {
+            font-weight: 500;
+            color: var(--accent-color);
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .guess-attempts {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Snake Game Styles */
+        #snakeCanvas {
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+        }
+
+        .snake-score {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .snake-instructions {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Memory Game Styles */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .memory-card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 2px solid rgba(0, 170, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .memory-card:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        .memory-card.flipped {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+            border-color: var(--accent-color);
+        }
+
+        .memory-score {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Quiz Game Styles */
+        .quiz-question {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+            text-align: center;
+            margin-bottom: 20px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .quiz-option {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(0, 170, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .quiz-option:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        .quiz-option.correct {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%);
+            border-color: #22c55e;
+        }
+
+        .quiz-option.incorrect {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+            border-color: #ef4444;
+        }
+
+        .quiz-score {
+            font-weight: 500;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 280px;
+            }
+            .sidebar.open ~ .main-chat {
+                margin-left: 280px;
+            }
+            .message {
+                max-width: 85%;
+            }
+            .auth-container {
+                margin: 20px;
+                padding: 30px 20px;
+                max-width: none;
+            }
+            .auth-container h2 {
+                font-size: 24px;
+            }
+            .game-modal {
+                margin: 20px;
+                padding: 15px;
+                max-width: none;
+            }
+            .game-menu {
+                grid-template-columns: 1fr;
+            }
+            .memory-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            #snakeCanvas {
+                width: 300px;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body class="dark">
+    <!-- Auth Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-container">
+            <div id="loginForm">
+                <h2>Login to NamasteAI</h2>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" name="email" required placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" name="password" required placeholder="Enter your password">
+                    </div>
+                    <div id="loginError" class="error-message" style="display: none;"></div>
+                    <button type="submit" class="auth-button" id="loginButton">Login</button>
+                </form>
+                <p class="auth-switch">
+                    Don't have an account? <button class="link-button" onclick="showRegister()">Register here</button>
+                </p>
+            </div>
+            <div id="registerForm" style="display: none;">
+                <h2>Register for NamasteAI</h2>
+                <form id="registerFormElement">
+                    <div class="form-group">
+                        <label for="registerName">Name</label>
+                        <input type="text" id="registerName" name="name" required placeholder="Enter your name">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" name="email" required placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" name="password" required placeholder="Enter your password">
+                    </div>
+                    <div id="registerError" class="error-message" style="display: none;"></div>
+                    <button type="submit" class="auth-button" id="registerButton">Register</button>
+                </form>
+                <p class="auth-switch">
+                    Already have an account? <button class="link-button" onclick="showLogin()">Login here</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-app" id="chatApp" style="display: none;">
+        <div class="scanline"></div>
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Chat History</h3>
+                <div class="header-buttons">
+                    <button class="new-conversation-btn" onclick="newChat()" title="Start New Chat">+ New Chat</button>
+                    <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close Sidebar">✕</button>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search conversations..." oninput="filterConversations()">
+            </div>
+            <div class="conversations-list" id="conversationsList">
+                <!-- Chat items will be dynamically added here -->
+            </div>
+        </div>
+
+        <!-- Main Chat -->
+        <div class="main-chat">
+            <div class="app-heading">
+                <h1>NamasteAI</h1>
+            </div>
+            <div class="chat-header">
+                <h1 id="chatTitle">AI Assistant</h1>
+                <div class="header-buttons">
+                    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                    <button class="sound-toggle" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+                    <button class="logout-btn" onclick="logout()" title="Logout">Logout</button>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages will be dynamically added here -->
+            </div>
+
+            <div class="input-area">
+                <div class="input-container">
+                    <input type="text" placeholder="Type your message..." id="messageInput">
+                </div>
+                <button class="send-button" onclick="sendMessage()" title="Send Message">✉️</button>
+                <button class="send-button" onclick="startListening()" title="Voice Input">🎤</button>
+                <button class="send-button" onclick="getWeather()" title="Get Weather">🌤️</button>
+                <button class="send-button" onclick="showGameMenu()" title="Games">🎮</button>
+            </div>
+
+            <!-- Fixed sidebar toggle button (outside sidebar) -->
+            <button class="sidebar-toggle-fixed" id="sidebarToggleButton" onclick="toggleSidebar()" title="Open Sidebar">☰</button>
+        </div>
+
+        <!-- Game Overlays -->
+        <div id="gameMenuOverlay" class="game-overlay" style="display: none;">
+            <div class="game-modal">
+                <div class="game-header">
+                    <h2>🎮 Choose a Game</h2>
+                    <button class="close-game-btn" onclick="closeGameMenu()">✕</button>
+                </div>
+                <div class="game-menu">
+                    <button class="game-option" onclick="startGame('tictactoe')">
+                        <span class="game-icon">⭕</span>
+                        <div class="game-info">
+                            <div class="game-title">Tic-Tac-Toe</div>
+                            <div class="game-desc">Classic 3x3 grid game vs AI</div>
+                        </div>
+                    </button>
+                    <button class="game-option" onclick="startGame('rps')">
+                        <span class="game-icon">✂️</span>
+                        <div class="game-info">
+                            <div class="game-title">Rock Paper Scissors</div>
+                            <div class="game-desc">Best of luck vs computer</div>
+                        </div>
+                    </button>
+                    <button class="game-option" onclick="startGame('numberguess')">
+                        <span class="game-icon">🔢</span>
+                        <div class="game-info">
+                            <div class="game-title">Number Guessing</div>
+                            <div class="game-desc">Guess the number 1-100</div>
+                        </div>
+                    </button>
+                    <button class="game-option" onclick="startGame('snake')">
+                        <span class="game-icon">🐍</span>
+                        <div class="game-info">
+                            <div class="game-title">Snake</div>
+                            <div class="game-desc">Classic snake game</div>
+                        </div>
+                    </button>
+                    <button class="game-option" onclick="startGame('memory')">
+                        <span class="game-icon">🃏</span>
+                        <div class="game-info">
+                            <div class="game-title">Memory Cards</div>
+                            <div class="game-desc">Match the pairs</div>
+                        </div>
+                    </button>
+                    <button class="game-option" onclick="startGame('quiz')">
+                        <span class="game-icon">🧠</span>
+                        <div class="game-info">
+                            <div class="game-title">Quiz</div>
+                            <div class="game-desc">Test your knowledge</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Containers (hidden by default) -->
+        <div id="tictactoeGame" class="game-overlay" style="display: none;">
+            <div class="game-modal">
+                <div class="game-header">
+                    <h2>⭕ Tic-Tac-Toe</h2>
+                    <button class="close-game-btn" onclick="closeGame()">✕</button>
+                </div>
+                <div class="game-content">
+                    <canvas id="tictactoeCanvas" width="300" height="300"></canvas>
+                    <div class="game-status" id="tictactoeStatus">Your turn!</div>
+                    <button class="game-reset-btn" onclick="resetTicTacToe()">New Game</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="rpsGame" class="game-overlay" style="display: none;">
+            <div class="game-modal">
+                <div class="game-header">
+                    <h2>✂️ Rock Paper Scissors</h2>
+                    <button class="close-game-btn" onclick="closeGame()">✕</button>
+                </div>
+                <div class="game-content">
+                    <div class="rps-choices">
+                        <button class="rps-choice" onclick="playRPS('rock')">🪨 Rock</button>
+                        <button class="rps-choice" onclick="playRPS('paper')">📄 Paper</button>
+                        <button class="rps-choice" onclick="playRPS('scissors')">✂️ Scissors</button>
+                    </div>
+                    <div class="rps-result" id="rpsResult">Choose your move!</div>
+                    <div class="rps-score" id="rpsScore">Wins: 0 | Losses: 0 | Ties: 0</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="numberGuessGame" class="game-overlay" style="display: none;">
+            <div class="game-modal">
+                <div class="game-header">
+                    <h2>🔢 Number Guessing</h2>
+                    <button class="close-game-btn" onclick="closeGame()">✕</button>
+                </div>
+                <div class="game-content">
+                    <div class="guess-prompt">I'm thinking of a number between 1 and 100...</div>
+                    <input type="number" id="guessInput" min="1" max="100" placeholder="Enter your guess">
+                    <button class="guess-submit-btn" onclick="makeGuess()">Guess</button>
+                    <div class="guess-hint" id="guessHint"></div>
+                    <div class="guess-attempts" id="guessAttempts">Attempts: 0</div>
+                    <button class="game-reset-btn" onclick="resetNumberGuess()">New Game</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="snakeGame" class="game-overlay" style="display: none;">
+            <div class="game-modal">
+                <div class="game-header">
+                    <h2>🐍 Snake</h2>
+                    <button class="close-game-btn" onclick="closeGame()">✕</button>
+                </div>
+                <div class="game-content">
+                    <canvas id="snakeCanvas" width="400" height="400"></canvas>
+                    <div class="snake-score" id="snakeScore">Score: 0</div>
+                    <div class="snake-instructions">Use arrow keys to move</div>
+                    <button class="game-reset-btn" onclick="resetSnake()">New Game</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="memoryGame" class="game-overlay" style="display: none;">
+            <div class="game-modal">
+                <div class="game-header">
+                    <h2>🃏 Memory Cards</h2>
+                    <button class="close-game-btn" onclick="closeGame()">✕</button>
+                </div>
+                <div class="game-content">
+                    <div class="memory-grid" id="memoryGrid"></div>
+                    <div class="memory-score" id="memoryScore">Matches: 0 | Attempts: 0</div>
+                    <button class="game-reset-btn" onclick="resetMemory()">New Game</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="quizGame" class="game-overlay" style="display: none;">
+            <div class="game-modal">
+                <div class="game-header">
+                    <h2>🧠 Quiz</h2>
+                    <button class="close-game-btn" onclick="closeGame()">✕</button>
+                </div>
+                <div class="game-content">
+                    <div class="quiz-question" id="quizQuestion"></div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-score" id="quizScore">Score: 0/0</div>
+                    <button class="game-reset-btn" onclick="resetQuiz()">New Quiz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        let chats = [];
+        let currentChatId = null;
+        let chatCounter = 1;
+        let isAuthenticated = false;
+        let user = null;
+        let messageCount = 0;
+        const MESSAGE_LIMIT = 30;
+        let soundEnabled = true;
+        let searchTerm = '';
+
+        // Function to play robotic beep sound
+        function playRoboticSound() {
+            if (!soundEnabled) return;
+
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // Frequency for beep
+            oscillator.type = 'square'; // Robotic sound
+
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        // Function to toggle sound on/off
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const soundBtn = document.querySelector('.sound-toggle');
+            soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+            soundBtn.title = soundEnabled ? 'Toggle Sound (On)' : 'Toggle Sound (Off)';
+        }
+
+        // Initialize with a welcome chat
+        function initializeApp() {
+            const savedChats = localStorage.getItem('chatHistory');
+            if (savedChats) {
+                chats = JSON.parse(savedChats);
+                currentChatId = chats[0]?.id || null;
+                chatCounter = chats.length > 0 ? Math.max(...chats.map(c => parseInt(c.id.split('-')[1] || 0))) + 1 : 1;
+            } else {
+                const welcomeChat = {
+                    id: `chat-${chatCounter++}`,
+                    title: 'Welcome to AI Chat',
+                    messages: [{
+                        type: 'assistant',
+                        content: 'Hello! I\'m your AI assistant. How can I help you today?',
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    }],
+                    createdAt: new Date()
+                };
+                chats.push(welcomeChat);
+                currentChatId = welcomeChat.id;
+            }
+            renderSidebar();
+            if (currentChatId) {
+                loadChat(currentChatId);
+            }
+        }
+
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggleButton = document.getElementById('sidebarToggleButton');
+            sidebar.classList.toggle('open');
+            if (sidebarToggleButton) { // Ensure the fixed button exists
+                if (sidebar.classList.contains('open')) {
+                    sidebarToggleButton.style.display = 'none';
+                } else {
+                    sidebarToggleButton.style.display = 'block';
+                }
+            }
+        }
+
+        function makeDraggable(element) {
+
+            function startDrag(e) {
+                e.preventDefault();
+                isDragging = true;
+
+                const rect = element.getBoundingClientRect();
+                dragOffset.x = e.clientX - rect.left;
+                dragOffset.y = e.clientY - rect.top;
+
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag, { passive: false });
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+
+                element.style.cursor = 'grabbing';
+            }
+
+            function drag(e) {
+                if (!isDragging) return;
+
+                e.preventDefault();
+                const x = e.clientX - dragOffset.x;
+                const y = e.clientY - dragOffset.y;
+
+                // Keep button within viewport bounds
+                const maxX = window.innerWidth - element.offsetWidth;
+                const maxY = window.innerHeight - element.offsetHeight;
+
+                const clampedX = Math.max(0, Math.min(x, maxX));
+                const clampedY = Math.max(0, Math.min(y, maxY));
+
+                element.style.left = clampedX + 'px';
+                element.style.top = clampedY + 'px';
+                element.style.right = 'auto';
+                element.style.transform = 'none';
+            }
+
+            function stopDrag() {
+                isDragging = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('touchmove', drag);
+                document.removeEventListener('mouseup', stopDrag);
+                document.removeEventListener('touchend', stopDrag);
+                element.style.cursor = 'grab';
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark');
+            body.classList.toggle('light');
+            const themeBtn = document.querySelector('.theme-toggle');
+            themeBtn.textContent = body.classList.contains('dark') ? '☀️' : '🌙';
+        }
+
+        function newChat() {
+            const newChatObj = {
+                id: `chat-${chatCounter++}`,
+                title: `New Chat`,
+                messages: [
+                    {
+                        type: 'assistant',
+                        content: 'Hello! I\'m ready for a new conversation. What would you like to talk about?',
+                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    }
+                ],
+                createdAt: new Date()
+            };
+            chats.push(newChatObj);
+            currentChatId = newChatObj.id;
+            renderSidebar();
+            loadChat(newChatObj.id);
+            saveChats();
+        }
+
+        function selectChat(chatId) {
+            currentChatId = chatId;
+            renderSidebar();
+            loadChat(chatId);
+        }
+
+        function deleteChat(chatId) {
+            const chatIndex = chats.findIndex(c => c.id === chatId);
+            if (chatIndex === -1) return;
+
+            chats.splice(chatIndex, 1);
+            saveChats();
+
+            if (currentChatId === chatId) {
+                if (chats.length > 0) {
+                    currentChatId = chats[0].id;
+                } else {
+                    // If no chats left, create a new one
+                    newChat();
+                    return;
+                }
+            }
+
+            renderSidebar();
+            loadChat(currentChatId);
+        }
+
+        function filterConversations() {
+            const searchInput = document.getElementById('searchInput');
+            searchTerm = searchInput.value.toLowerCase().trim();
+
+            renderSidebar();
+        }
+
+        function getChatTitle(chat) {
+            const firstUserMessage = chat.messages.find(msg => msg.type === 'user');
+            if (firstUserMessage) {
+                // Extract highlighted topic from first user message
+                const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their', 'this', 'that', 'these', 'those'];
+                const words = firstUserMessage.content.toLowerCase().split(/\s+/).filter(word => word.length > 2 && !stopWords.includes(word));
+                const topic = words.slice(0, 3).join(' '); // Take first 3 meaningful words
+                return topic.charAt(0).toUpperCase() + topic.slice(1) || 'New Chat';
+            } else {
+                return chat.title || 'New Chat';
+            }
+        }
+
+        function renderSidebar() {
+            const conversationsList = document.getElementById('conversationsList');
+            conversationsList.innerHTML = '';
+
+            const filteredChats = searchTerm ? chats.filter(chat => {
+                const titleMatch = getChatTitle(chat).toLowerCase().includes(searchTerm);
+                const messageMatch = chat.messages.some(msg =>
+                    msg.content.toLowerCase().includes(searchTerm)
+                );
+                return titleMatch || messageMatch;
+            }) : chats;
+
+            filteredChats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = `conversation-item ${chat.id === currentChatId ? 'active' : ''}`;
+
+                const realDateTime = new Date(chat.createdAt).toLocaleString([], {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                chatItem.innerHTML = `
+                    <div class="conversation-content" onclick="selectChat('${chat.id}')">
+                        <div class="conversation-title">${getChatTitle(chat)}</div>
+                        <div class="conversation-meta">${realDateTime}</div>
+                    </div>
+                    <button class="delete-chat-btn" onclick="deleteChat('${chat.id}')" title="Delete Chat">🗑️</button>
+                `;
+
+                conversationsList.appendChild(chatItem);
+            });
+        }
+
+        function loadChat(chatId) {
+            const chat = chats.find(c => c.id === chatId);
+            if (!chat) return;
+
+            const messagesContainer = document.getElementById('messagesContainer');
+            const chatTitle = document.getElementById('chatTitle');
+
+            chatTitle.textContent = chat.title;
+            messagesContainer.innerHTML = '';
+
+            chat.messages.forEach(message => {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${message.type}`;
+                messageElement.innerHTML = `
+                    <div class="message-content">${message.content}</div>
+                    <div class="message-time">${message.time}</div>
+                `;
+                messagesContainer.appendChild(messageElement);
+            });
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+
+
+        async function getAIResponse(message) {
+            const currentChat = chats.find(c => c.id === currentChatId);
+            if (!currentChat) return;
+
+            // Add typing indicator
+            const typingIndicator = { id: 'typing', type: 'assistant', content: '<div class="typing-dots"></div>', time: '' };
+            currentChat.messages.push(typingIndicator);
+            loadChat(currentChatId);
+
+            try {
+                const response = await fetch('http://localhost:5000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: [{ role: 'user', content: message }] })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+                const reply = data.choices?.[0]?.message?.content || "Sorry, I couldn't understand that.";
+
+                // Replace typing indicator with actual message
+                currentChat.messages.pop();
+                document.getElementById('ping')?.play();
+                await streamAIResponse(reply);
+
+            } catch (err) {
+                console.error('Error:', err);
+                const errorMessage = {
+                    type: 'assistant',
+                    content: "❌ Failed to get response from AI. Please ensure the backend server is running.",
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                currentChat.messages.pop();
+                currentChat.messages.push(errorMessage);
+            }
+        }
+
+        function streamAIResponse(reply) {
+            return new Promise(resolve => {
+                const currentChat = chats.find(c => c.id === currentChatId);
+                if (!currentChat) return resolve();
+
+                const aiMessage = {
+                    type: 'assistant',
+                    content: '',
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                currentChat.messages.push(aiMessage); // Add the placeholder message object
+
+                const messagesContainer = document.getElementById('messagesContainer');
+                const lastMessageContent = messagesContainer.querySelector('.message:last-child .message-content');
+
+                if (!lastMessageContent) return resolve();
+
+                const words = reply.split(' ');
+                let wordIndex = 0;
+
+                const intervalId = setInterval(() => {
+                    if (wordIndex < words.length) {
+                        aiMessage.content += (wordIndex > 0 ? ' ' : '') + words[wordIndex];
+                        lastMessageContent.innerHTML = aiMessage.content; // Update the DOM
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        wordIndex++;
+                    } else {
+                        clearInterval(intervalId);
+                        // Update the final message in the data model and save
+                        aiMessage.content = reply;
+                        saveChats();
+                        resolve();
+                    }
+                }, 75); // Adjust the interval for faster/slower typing
+            });
+        }
+
+        async function getWeather() {
+            const currentChat = chats.find(c => c.id === currentChatId);
+            if (!currentChat) return;
+
+            addAssistantMessage("📡 Fetching weather...");
+            try {
+                // Get user location
+                const locRes = await fetch('https://ipapi.co/json');
+                const loc = await locRes.json();
+
+                if (!loc.latitude || !loc.longitude) {
+                    addAssistantMessage("❌ Unable to determine your location.");
+                    return;
+                }
+
+                // Fetch weather from backend
+                const weatherRes = await fetch(`http://localhost:5000/api/chat/weather?lat=${loc.latitude}&lon=${loc.longitude}`);
+                if (!weatherRes.ok) {
+                    throw new Error('Weather API request failed');
+                }
+                const weatherData = await weatherRes.json();
+
+                // Extract current weather data
+                const current = weatherData.current;
+                const temp = Math.round(current.temp);
+                const windSpeed = Math.round(current.wind_speed * 3.6); // Convert m/s to km/h
+                const description = current.weather[0].description;
+                const humidity = current.humidity;
+
+                const text = `📍 ${loc.city || 'Unknown City'}, ${loc.region || 'Unknown Region'}\n🌡 Temp: ${temp}°C\n🌬 Wind: ${windSpeed} km/h\n☁ Weather: ${description}\n💧 Humidity: ${humidity}%`;
+                addAssistantMessage(text.replace(/\n/g, '<br>'));
+            } catch (err) {
+                console.error('Weather fetch error:', err);
+                addAssistantMessage("❌ Failed to fetch weather info. Please ensure the backend server is running and API keys are configured.");
+            }
+        }
+
+        async function getNews() {
+            const currentChat = chats.find(c => c.id === currentChatId);
+            if (!currentChat) return;
+
+            addAssistantMessage("📰 Fetching news...");
+            try {
+                const newsRes = await fetch('http://localhost:5000/api/chat/news?country=in');
+                const newsData = await newsRes.json();
+                if (newsData.articles && newsData.articles.length > 0) {
+                    const top3 = newsData.articles.slice(0, 3).map(a => `🗞️ <a href="${a.url}" target="_blank">${a.title}</a>`).join('<br><br>');
+                    addAssistantMessage(top3);
+                } else {
+                    addAssistantMessage("❌ No news found.");
+                }
+            } catch (err) {
+                addAssistantMessage("❌ Failed to fetch news.");
+            }
+        }
+
+        function startListening() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Voice input not supported in this browser.");
+                return;
+            }
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = "en-IN";
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('messageInput').value = transcript;
+                sendMessage();
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+                addAssistantMessage("❌ Voice input error: " + event.error);
+            };
+
+            recognition.start();
+            addAssistantMessage("🎤 Listening...");
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+
+            if (diffInMinutes < 1) return 'Just now';
+            if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+            const diffInHours = Math.floor(diffInMinutes / 60);
+            if (diffInHours < 24) return `${diffInHours}h ago`;
+
+            const diffInDays = Math.floor(diffInHours / 24);
+            return `${diffInDays}d ago`;
+        }
+
+        function saveChats() {
+            localStorage.setItem('chatHistory', JSON.stringify(chats));
+        }
+
+        function addAssistantMessage(content) {
+            const currentChat = chats.find(c => c.id === currentChatId);
+            if (!currentChat) return;
+
+            const message = {
+                type: 'assistant',
+                content: content,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            // Replace typing indicator if it exists
+            if (currentChat.messages[currentChat.messages.length - 1]?.id === 'typing') currentChat.messages.pop();
+            currentChat.messages.push(message);
+            loadChat(currentChatId);
+            saveChats();
+        }
+
+        // Game Functions
+        function showGameMenu() {
+            document.getElementById('gameMenuOverlay').style.display = 'flex';
+        }
+
+        function closeGameMenu() {
+            document.getElementById('gameMenuOverlay').style.display = 'none';
+        }
+
+        function startGame(gameType) {
+            closeGameMenu();
+            // Hide all game overlays
+            document.querySelectorAll('.game-overlay').forEach(overlay => {
+                if (overlay.id !== gameType + 'Game') {
+                    overlay.style.display = 'none';
+                }
+            });
+            // Show the selected game
+            document.getElementById(gameType + 'Game').style.display = 'flex';
+            // Initialize the game
+            switch(gameType) {
+                case 'tictactoe':
+                    resetTicTacToe();
+                    break;
+                case 'rps':
+                    // RPS doesn't need reset
+                    break;
+                case 'numberguess':
+                    resetNumberGuess();
+                    break;
+                case 'snake':
+                    resetSnake();
+                    break;
+                case 'memory':
+                    resetMemory();
+                    break;
+                case 'quiz':
+                    resetQuiz();
+                    break;
+            }
+        }
+
+        function closeGame() {
+            document.querySelectorAll('.game-overlay').forEach(overlay => {
+                overlay.style.display = 'none';
+            });
+        }
+
+        // Tic-Tac-Toe
+        let tictactoeBoard = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameActive = true;
+
+        function resetTicTacToe() {
+            tictactoeBoard = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            document.getElementById('tictactoeStatus').textContent = "Your turn!";
+            drawTicTacToe();
+        }
+
+        function drawTicTacToe() {
+            const canvas = document.getElementById('tictactoeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Draw grid
+            ctx.strokeStyle = 'var(--primary-color)';
+            ctx.lineWidth = 2;
+            for (let i = 1; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * 100, 0);
+                ctx.lineTo(i * 100, 300);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * 100);
+                ctx.lineTo(300, i * 100);
+                ctx.stroke();
+            }
+            // Draw X and O
+            for (let i = 0; i < 9; i++) {
+                const x = (i % 3) * 100 + 50;
+                const y = Math.floor(i / 3) * 100 + 50;
+                if (tictactoeBoard[i] === 'X') {
+                    ctx.strokeStyle = 'var(--primary-color)';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(x - 30, y - 30);
+                    ctx.lineTo(x + 30, y + 30);
+                    ctx.moveTo(x + 30, y - 30);
+                    ctx.lineTo(x - 30, y + 30);
+                    ctx.stroke();
+                } else if (tictactoeBoard[i] === 'O') {
+                    ctx.strokeStyle = 'var(--accent-color)';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 30, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        document.getElementById('tictactoeCanvas').addEventListener('click', function(event) {
+            if (!gameActive) return;
+            const rect = this.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const col = Math.floor(x / 100);
+            const row = Math.floor(y / 100);
+            const index = row * 3 + col;
+            if (tictactoeBoard[index] === '') {
+                tictactoeBoard[index] = currentPlayer;
+                drawTicTacToe();
+                if (checkWinner()) {
+                    document.getElementById('tictactoeStatus').textContent = currentPlayer + ' wins!';
+                    addAssistantMessage(`🎮 Tic-Tac-Toe: ${currentPlayer === 'X' ? 'You' : 'AI'} wins!`);
+                    gameActive = false;
+                } else if (tictactoeBoard.every(cell => cell !== '')) {
+                    document.getElementById('tictactoeStatus').textContent = 'Draw!';
+                    addAssistantMessage('🎮 Tic-Tac-Toe: It\'s a draw!');
+                    gameActive = false;
+                } else {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    if (currentPlayer === 'O') {
+                        setTimeout(aiMove, 500);
+                    } else {
+                        document.getElementById('tictactoeStatus').textContent = "Your turn!";
+                    }
+                }
+            }
+        });
+
+        function checkWinner() {
+            const winPatterns = [
+                [0,1,2], [3,4,5], [6,7,8],
+                [0,3,6], [1,4,7], [2,5,8],
+                [0,4,8], [2,4,6]
+            ];
+            return winPatterns.some(pattern => {
+                return pattern.every(index => tictactoeBoard[index] === currentPlayer);
+            });
+        }
+
+        function aiMove() {
+            const emptyCells = tictactoeBoard.map((cell, index) => cell === '' ? index : null).filter(index => index !== null);
+            if (emptyCells.length > 0) {
+                const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                tictactoeBoard[randomIndex] = 'O';
+                drawTicTacToe();
+                if (checkWinner()) {
+                    document.getElementById('tictactoeStatus').textContent = 'AI wins!';
+                    gameActive = false;
+                } else if (tictactoeBoard.every(cell => cell !== '')) {
+                    document.getElementById('tictactoeStatus').textContent = 'Draw!';
+                    gameActive = false;
+                } else {
+                    currentPlayer = 'X';
+                    document.getElementById('tictactoeStatus').textContent = "Your turn!";
+                }
+            }
+        }
+
+        // Rock Paper Scissors
+        let rpsScore = { wins: 0, losses: 0, ties: 0 };
+
+        function playRPS(choice) {
+            const choices = ['rock', 'paper', 'scissors'];
+            const aiChoice = choices[Math.floor(Math.random() * 3)];
+            let result = '';
+            if (choice === aiChoice) {
+                result = 'It\'s a tie!';
+                rpsScore.ties++;
+            } else if (
+                (choice === 'rock' && aiChoice === 'scissors') ||
+                (choice === 'paper' && aiChoice === 'rock') ||
+                (choice === 'scissors' && aiChoice === 'paper')
+            ) {
+                result = 'You win!';
+                rpsScore.wins++;
+            } else {
+                result = 'You lose!';
+                rpsScore.losses++;
+            }
+            document.getElementById('rpsResult').textContent = `You chose ${choice}, AI chose ${aiChoice}. ${result}`;
+            document.getElementById('rpsScore').textContent = `Wins: ${rpsScore.wins} | Losses: ${rpsScore.losses} | Ties: ${rpsScore.ties}`;
+        }
+
+        // Number Guessing
+        let targetNumber;
+        let attempts = 0;
+
+        function resetNumberGuess() {
+            targetNumber = Math.floor(Math.random() * 100) + 1;
+            attempts = 0;
+            document.getElementById('guessHint').textContent = '';
+            document.getElementById('guessAttempts').textContent = 'Attempts: 0';
+            document.getElementById('guessInput').value = '';
+        }
+
+        function makeGuess() {
+            const guess = parseInt(document.getElementById('guessInput').value);
+            if (isNaN(guess) || guess < 1 || guess > 100) {
+                document.getElementById('guessHint').textContent = 'Please enter a number between 1 and 100.';
+                return;
+            }
+            attempts++;
+            document.getElementById('guessAttempts').textContent = `Attempts: ${attempts}`;
+            if (guess === targetNumber) {
+                document.getElementById('guessHint').textContent = `Congratulations! You guessed it in ${attempts} attempts.`;
+                setTimeout(resetNumberGuess, 2000);
+            } else if (guess < targetNumber) {
+                document.getElementById('guessHint').textContent = 'Too low! Try higher.';
+            } else {
+                document.getElementById('guessHint').textContent = 'Too high! Try lower.';
+            }
+        }
+
+        // Snake
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 15, y: 15};
+        let direction = {x: 0, y: 0};
+        let score = 0;
+        let gameRunning = false;
+
+        function resetSnake() {
+            snake = [{x: 10, y: 10}];
+            food = {x: 15, y: 15};
+            direction = {x: 0, y: 0};
+            score = 0;
+            gameRunning = false;
+            document.getElementById('snakeScore').textContent = 'Score: 0';
+            drawSnake();
+        }
+
+        function drawSnake() {
+            const canvas = document.getElementById('snakeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Draw snake
+            ctx.fillStyle = 'var(--primary-color)';
+            snake.forEach(segment => {
+                ctx.fillRect(segment.x * 20, segment.y * 20, 20, 20);
+            });
+            // Draw food
+            ctx.fillStyle = 'var(--accent-color)';
+            ctx.fillRect(food.x * 20, food.y * 20, 20, 20);
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (!gameRunning) return;
+            switch(event.key) {
+                case 'ArrowUp':
+                    if (direction.y === 0) direction = {x: 0, y: -1};
+                    break;
+                case 'ArrowDown':
+                    if (direction.y === 0) direction = {x: 0, y: 1};
+                    break;
+                case 'ArrowLeft':
+                    if (direction.x === 0) direction = {x: -1, y: 0};
+                    break;
+                case 'ArrowRight':
+                    if (direction.x === 0) direction = {x: 1, y: 0};
+                    break;
+            }
+        });
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            // Move snake
+            const head = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
+            snake.unshift(head);
+            // Check food
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                document.getElementById('snakeScore').textContent = `Score: ${score}`;
+                food = {x: Math.floor(Math.random() * 20), y: Math.floor(Math.random() * 20)};
+            } else {
+                snake.pop();
+            }
+            // Check collision
+            if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20 || snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y)) {
+                gameRunning = false;
+                alert('Game Over! Score: ' + score);
+                resetSnake();
+                return;
+            }
+            drawSnake();
+            setTimeout(gameLoop, 200);
+        }
+
+        function startSnake() {
+            if (!gameRunning) {
+                gameRunning = true;
+                gameLoop();
+            }
+        }
+
+        // Memory Game
+        let memoryCards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let memoryAttempts = 0;
+
+        function resetMemory() {
+            const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+            memoryCards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+            flippedCards = [];
+            matchedPairs = 0;
+            memoryAttempts = 0;
+            const grid = document.getElementById('memoryGrid');
+            grid.innerHTML = '';
+            memoryCards.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.dataset.index = index;
+                card.onclick = () => flipCard(card, index);
+                grid.appendChild(card);
+            });
+            document.getElementById('memoryScore').textContent = 'Matches: 0 | Attempts: 0';
+        }
+
+        function flipCard(card, index) {
+            if (flippedCards.length >= 2 || card.classList.contains('flipped')) return;
+            card.classList.add('flipped');
+            card.textContent = memoryCards[index];
+            flippedCards.push({card, index});
+            if (flippedCards.length === 2) {
+                memoryAttempts++;
+                document.getElementById('memoryScore').textContent = `Matches: ${matchedPairs} | Attempts: ${memoryAttempts}`;
+                setTimeout(() => {
+                    if (memoryCards[flippedCards[0].index] === memoryCards[flippedCards[1].index]) {
+                        matchedPairs++;
+                        flippedCards.forEach(item => item.card.style.visibility = 'hidden');
+                        if (matchedPairs === 8) {
+                            alert('Congratulations! You won in ' + memoryAttempts + ' attempts.');
+                            resetMemory();
+                        }
+                    } else {
+                        flippedCards.forEach(item => {
+                            item.card.classList.remove('flipped');
+                            item.card.textContent = '';
+                        });
+                    }
+                    flippedCards = [];
+                }, 1000);
+            }
+        }
+
+        // Quiz
+        let quizQuestions = [
+            { question: 'What is the capital of France?', options: ['London', 'Berlin', 'Paris', 'Madrid'], answer: 2 },
+            { question: 'What is 2 + 2?', options: ['3', '4', '5', '6'], answer: 1 },
+            { question: 'What color is the sky?', options: ['Green', 'Blue', 'Red', 'Yellow'], answer: 1 },
+            { question: 'What is the largest planet in our solar system?', options: ['Earth', 'Mars', 'Jupiter', 'Saturn'], answer: 2 },
+            { question: 'What is the chemical symbol for water?', options: ['H2O', 'CO2', 'O2', 'NaCl'], answer: 0 }
+        ];
+        let currentQuestion = 0;
+        let quizScore = 0;
+
+        function resetQuiz() {
+            currentQuestion = 0;
+            quizScore = 0;
+            document.getElementById('quizScore').textContent = 'Score: 0/0';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= quizQuestions.length) {
+                alert(`Quiz completed! Your score: ${quizScore}/${quizQuestions.length}`);
+                resetQuiz();
+                return;
+            }
+            const q = quizQuestions[currentQuestion];
+            document.getElementById('quizQuestion').textContent = q.question;
+            const optionsDiv = document.getElementById('quizOptions');
+            optionsDiv.innerHTML = '';
+            q.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'quiz-option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectAnswer(index);
+                optionsDiv.appendChild(optionDiv);
+            });
+        }
+
+        function selectAnswer(index) {
+            const q = quizQuestions[currentQuestion];
+            const options = document.querySelectorAll('.quiz-option');
+            options.forEach((option, i) => {
+                if (i === q.answer) {
+                    option.classList.add('correct');
+                } else if (i === index && i !== q.answer) {
+                    option.classList.add('incorrect');
+                }
+            });
+            if (index === q.answer) {
+                quizScore++;
+            }
+            document.getElementById('quizScore').textContent = `Score: ${quizScore}/${currentQuestion + 1}`;
+            setTimeout(() => {
+                currentQuestion++;
+                loadQuestion();
+            }, 2000);
+        }
+
+        // Authentication functions
+        async function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showAuthOverlay();
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    user = data.user;
+                    isAuthenticated = true;
+                    showChatApp();
+                } else {
+                    localStorage.removeItem('token');
+                    showAuthOverlay();
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                localStorage.removeItem('token');
+                showAuthOverlay();
+            }
+        }
+
+        function showAuthOverlay() {
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('chatApp').style.display = 'none';
+        }
+
+        function showChatApp() {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('chatApp').style.display = 'flex';
+            initializeApp();
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            const button = document.getElementById('loginButton');
+
+            button.textContent = 'Logging in...';
+            button.disabled = true;
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    user = data.user;
+                    isAuthenticated = true;
+                    messageCount = 0; // Reset message count for authenticated users
+                    showChatApp();
+                } else {
+                    errorDiv.textContent = data.message || 'Login failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                button.textContent = 'Login';
+                button.disabled = false;
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const errorDiv = document.getElementById('registerError');
+            const button = document.getElementById('registerButton');
+
+            button.textContent = 'Creating Account...';
+            button.disabled = true;
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    user = data.user;
+                    isAuthenticated = true;
+                    messageCount = 0; // Reset message count for authenticated users
+                    showChatApp();
+                } else {
+                    errorDiv.textContent = data.message || 'Registration failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
+            } finally {
+                button.textContent = 'Register';
+                button.disabled = false;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            user = null;
+            isAuthenticated = false;
+            messageCount = 0;
+            showAuthOverlay();
+        }
+
+        // Modified sendMessage to include message limiting
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Check message limit for anonymous users
+            if (!isAuthenticated && messageCount >= MESSAGE_LIMIT) {
+                showAuthPrompt();
+                return;
+            }
+
+            const currentChat = chats.find(c => c.id === currentChatId);
+            if (!currentChat) return;
+
+            const userMessage = {
+                type: 'user',
+                content: message,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+
+            currentChat.messages.push(userMessage);
+            input.value = '';
+
+            // Increment message count for anonymous users
+            if (!isAuthenticated) {
+                messageCount++;
+                updateMessageCounter();
+            }
+
+            loadChat(currentChatId);
+
+            // Get real AI response
+            await getAIResponse(message);
+        }
+
+        function showAuthPrompt() {
+            const prompt = document.createElement('div');
+            prompt.className = 'auth-prompt-overlay';
+            prompt.innerHTML = `
+                <div class="auth-prompt">
+                    <h3>Message Limit Reached</h3>
+                    <p>You've reached the 10-message limit for anonymous users.</p>
+                    <p>Please login or register to continue chatting!</p>
+                    <div class="auth-prompt-actions">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove(); showAuthOverlay();">Login/Register</button>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove();">Cancel</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(prompt);
+        }
+
+        function updateMessageCounter() {
+            const counter = document.querySelector('.message-counter');
+            if (!isAuthenticated) {
+                if (!counter) {
+                    const inputContainer = document.querySelector('.input-container');
+                    const newCounter = document.createElement('div');
+                    newCounter.className = 'message-counter';
+                    inputContainer.appendChild(newCounter);
+                }
+                document.querySelector('.message-counter').textContent = `Messages: ${messageCount}/${MESSAGE_LIMIT}`;
+            } else if (counter) {
+                counter.remove();
+            }
+        }
+
+        // Initialize the app
+        checkAuthStatus();
+
+        // Make the sidebar toggle button draggable
+        const sidebarToggleButton = document.getElementById('sidebarToggleButton');
+        if (sidebarToggleButton) makeDraggable(sidebarToggleButton);
+
+        // Add double-click to toggle sidebar
+        const mainChat = document.querySelector('.main-chat');
+        mainChat.addEventListener('dblclick', function(e) {
+            // Prevent double-click from interfering with text selection
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                toggleSidebar();
+            }
+        });
+
+        // Allow sending message with Enter key
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Add form event listeners
+        document.getElementById('loginFormElement').addEventListener('submit', handleLogin);
+        document.getElementById('registerFormElement').addEventListener('submit', handleRegister);
+
+        // Add click event listeners to all interactive buttons for robotic sound
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.addEventListener('click', playRoboticSound);
+        });
+    </script>
+</body>
+</html>
